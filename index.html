@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compte rendu de chantier — SNCF INFRA</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  :root{
+    --navy:#122A4E;
+    --navy-dark:#0B1D38;
+    --steel:#5A6B82;
+    --steel-light:#8C99AC;
+    --paper:#F3F4F1;
+    --card:#FFFFFF;
+    --line:#DADFE5;
+    --orange:#D9601A;
+    --orange-dark:#B84E12;
+    --ok:#2E7D4F;
+    --text:#1B2430;
+    --text-soft:#5C6675;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    font-family:"Segoe UI","IBM Plex Sans",Arial,sans-serif;
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:60px;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    background:var(--navy);
+    color:#fff;
+    padding:22px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+    border-bottom:3px solid var(--orange);
+  }
+  .topbar h1{
+    font-size:1.15rem;
+    margin:0;
+    letter-spacing:.2px;
+    font-weight:600;
+  }
+  .topbar .sub{
+    font-size:.78rem;
+    color:#B9C4D6;
+    margin-top:3px;
+  }
+  .topbar-tag{
+    font-size:.68rem;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.25);
+    padding:5px 10px;
+    border-radius:3px;
+    color:#E4E9F0;
+  }
+
+  main{
+    max-width:820px;
+    margin:0 auto;
+    padding:24px 16px 0;
+  }
+
+  .section{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:6px;
+    margin-bottom:18px;
+    overflow:hidden;
+  }
+  .section-head{
+    padding:14px 18px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .section-head h2{
+    font-size:.95rem;
+    margin:0;
+    color:var(--navy-dark);
+    font-weight:700;
+  }
+  .section-head .count{
+    font-size:.75rem;
+    color:var(--text-soft);
+  }
+  .section-body{ padding:18px; }
+
+  .field-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px 18px;
+  }
+  @media (max-width:600px){ .field-grid{grid-template-columns:1fr;} }
+
+  .field{ display:flex; flex-direction:column; gap:5px; }
+  .field label{
+    font-size:.72rem;
+    font-weight:600;
+    color:var(--text-soft);
+    text-transform:uppercase;
+    letter-spacing:.4px;
+  }
+  .field input[type=text],
+  .field input[type=date],
+  .field input[type=number],
+  .field textarea{
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:9px 10px;
+    font-size:.9rem;
+    font-family:inherit;
+    color:var(--text);
+    background:#FBFBFA;
+    width:100%;
+  }
+  .field textarea{ resize:vertical; min-height:44px; }
+  .field input:focus, .field textarea:focus{
+    outline:none;
+    border-color:var(--navy);
+    background:#fff;
+    box-shadow:0 0 0 3px rgba(18,42,78,.08);
+  }
+
+  .date-range{ display:flex; align-items:center; gap:8px; }
+  .date-range span{ font-size:.8rem; color:var(--text-soft); }
+
+  .checks{ display:flex; gap:22px; margin-top:4px; }
+  .check{ display:flex; align-items:center; gap:8px; font-size:.88rem; cursor:pointer; user-select:none; }
+  .check input{ width:17px; height:17px; accent-color:var(--orange); cursor:pointer; }
+
+  /* ---------- Entry cards ---------- */
+  .entry{
+    border:1px solid var(--line);
+    border-left:4px solid var(--navy);
+    border-radius:5px;
+    padding:14px 16px 16px;
+    margin-bottom:14px;
+    background:#FCFCFB;
+    position:relative;
+  }
+  .entry-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:12px;
+  }
+  .entry-top .tag{
+    font-size:.72rem;
+    font-weight:700;
+    color:var(--navy);
+    text-transform:uppercase;
+    letter-spacing:.5px;
+  }
+  .remove-btn{
+    border:none;
+    background:transparent;
+    color:var(--steel);
+    font-size:.78rem;
+    cursor:pointer;
+    padding:4px 8px;
+    border-radius:4px;
+  }
+  .remove-btn:hover{ background:#F3E2DC; color:var(--orange-dark); }
+
+  .entry .field-grid{ grid-template-columns:1fr 1fr 1fr; }
+  .entry .field-grid .full{ grid-column:1/-1; }
+  @media (max-width:650px){ .entry .field-grid{ grid-template-columns:1fr 1fr; } }
+
+  .add-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    background:#EDF0F5;
+    border:1px dashed var(--steel-light);
+    color:var(--navy-dark);
+    font-size:.85rem;
+    font-weight:600;
+    padding:10px 16px;
+    border-radius:5px;
+    cursor:pointer;
+    width:100%;
+    justify-content:center;
+  }
+  .add-btn:hover{ background:#E2E7EF; }
+
+  /* ---------- Actions ---------- */
+  .actions{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    margin:22px 0 8px;
+  }
+  .btn{
+    flex:1;
+    min-width:200px;
+    border:none;
+    border-radius:5px;
+    padding:13px 18px;
+    font-size:.92rem;
+    font-weight:700;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:9px;
+  }
+  .btn-primary{ background:var(--orange); color:#fff; }
+  .btn-primary:hover{ background:var(--orange-dark); }
+  .btn-secondary{ background:var(--navy); color:#fff; }
+  .btn-secondary:hover{ background:var(--navy-dark); }
+  .btn:disabled{ opacity:.5; cursor:not-allowed; }
+
+  .note{
+    font-size:.78rem;
+    color:var(--text-soft);
+    line-height:1.45;
+    background:#EEF1F5;
+    border:1px solid var(--line);
+    border-radius:5px;
+    padding:10px 13px;
+    margin-bottom:26px;
+  }
+  .note strong{ color:var(--navy-dark); }
+
+  .toast{
+    position:fixed;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--navy-dark);
+    color:#fff;
+    padding:11px 20px;
+    border-radius:6px;
+    font-size:.85rem;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .25s, transform .25s;
+    box-shadow:0 6px 18px rgba(0,0,0,.25);
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1>Compte rendu de chantier</h1>
+    <div class="sub">SNCF INFRA – INFRARAIL · Établissement Industriel Bourgogne</div>
+  </div>
+  <div class="topbar-tag">Annexe 1</div>
+</div>
+
+<main>
+
+  <div class="section">
+    <div class="section-head"><h2>Informations générales</h2></div>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field">
+          <label for="agents">Nom des agents</label>
+          <input type="text" id="agents" placeholder="Ex : Dupont J., Martin P.">
+        </div>
+        <div class="field">
+          <label for="lieu">Lieu du chantier</label>
+          <input type="text" id="lieu" placeholder="Ex : Voie 3, PK 12+400">
+        </div>
+        <div class="field">
+          <label>Date du chantier</label>
+          <div class="date-range">
+            <input type="date" id="dateDu">
+            <span>au</span>
+            <input type="date" id="dateAu">
+          </div>
+        </div>
+        <div class="field">
+          <label>Type d'intervention</label>
+          <div class="checks">
+            <label class="check"><input type="checkbox" id="typeDechargement"> Déchargement rails</label>
+            <label class="check"><input type="checkbox" id="typeRechargement"> Rechargement rails</label>
+          </div>
+        </div>
+        <div class="field">
+          <label for="chariotGuide">N° chariot guide</label>
+          <input type="text" id="chariotGuide">
+        </div>
+        <div class="field">
+          <label for="ensembleDechargement">N° ensemble déchargement</label>
+          <input type="text" id="ensembleDechargement">
+        </div>
+        <div class="field">
+          <label for="ensembleRechargement">N° ensemble rechargement</label>
+          <input type="text" id="ensembleRechargement">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>Journal des travaux</h2>
+      <span class="count" id="entryCount">1 entrée</span>
+    </div>
+    <div class="section-body" id="entries"></div>
+    <div class="section-body" style="padding-top:0;">
+      <button class="add-btn" id="addEntry" type="button">+ Ajouter une entrée</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head"><h2>Clôture</h2></div>
+    <div class="section-body">
+      <div class="field">
+        <label for="visa">Visa responsable rames</label>
+        <input type="text" id="visa" placeholder="Nom du responsable">
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-secondary" id="downloadBtn" type="button">⬇ Télécharger le PDF</button>
+    <button class="btn btn-primary" id="mailBtn" type="button">✉ Envoyer par mail</button>
+  </div>
+
+  <div class="note">
+    <strong>À propos de l'envoi par mail :</strong> pour des raisons de sécurité, un navigateur ne peut pas joindre
+    automatiquement un fichier à un e-mail. En cliquant sur « Envoyer par mail », le PDF est d'abord téléchargé
+    dans votre dossier Téléchargements, puis votre messagerie s'ouvre avec le sujet et le message déjà préparés :
+    il ne vous restera qu'à joindre ce fichier avant l'envoi.
+  </div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const { jsPDF } = window.jspdf;
+
+let entryIdCounter = 0;
+const entriesEl = document.getElementById('entries');
+const entryCountEl = document.getElementById('entryCount');
+
+function addEntry(data){
+  entryIdCounter++;
+  const id = entryIdCounter;
+  const wrap = document.createElement('div');
+  wrap.className = 'entry';
+  wrap.dataset.id = id;
+  wrap.innerHTML = `
+    <div class="entry-top">
+      <span class="tag">Entrée #${id}</span>
+      <button class="remove-btn" type="button" onclick="removeEntry(${id})">✕ Supprimer</button>
+    </div>
+    <div class="field-grid">
+      <div class="field">
+        <label>Date</label>
+        <input type="date" class="f-date">
+      </div>
+      <div class="field">
+        <label>Horaires travail</label>
+        <input type="text" class="f-htravail" placeholder="Ex : 8h - 16h">
+      </div>
+      <div class="field">
+        <label>Horaires intervalle</label>
+        <input type="text" class="f-hintervalle" placeholder="Ex : 9h - 11h30">
+      </div>
+      <div class="field full">
+        <label>Nature des travaux</label>
+        <textarea class="f-nature" rows="2"></textarea>
+      </div>
+      <div class="field">
+        <label>Lg de rails traités</label>
+        <input type="text" class="f-longueur" placeholder="Ex : 360 m">
+      </div>
+      <div class="field full">
+        <label>Observations</label>
+        <textarea class="f-obs" rows="2"></textarea>
+      </div>
+    </div>
+  `;
+  entriesEl.appendChild(wrap);
+  refreshCount();
+}
+
+function removeEntry(id){
+  const el = entriesEl.querySelector(`.entry[data-id="${id}"]`);
+  if(el) el.remove();
+  if(!entriesEl.children.length) addEntry();
+  refreshCount();
+}
+
+function refreshCount(){
+  const n = entriesEl.children.length;
+  entryCountEl.textContent = n + (n > 1 ? ' entrées' : ' entrée');
+}
+
+document.getElementById('addEntry').addEventListener('click', () => addEntry());
+addEntry(); // start with one entry
+
+function collectData(){
+  const rows = [...entriesEl.querySelectorAll('.entry')].map(e => ({
+    date: e.querySelector('.f-date').value,
+    htravail: e.querySelector('.f-htravail').value,
+    hintervalle: e.querySelector('.f-hintervalle').value,
+    nature: e.querySelector('.f-nature').value,
+    longueur: e.querySelector('.f-longueur').value,
+    obs: e.querySelector('.f-obs').value,
+  }));
+
+  return {
+    agents: document.getElementById('agents').value,
+    lieu: document.getElementById('lieu').value,
+    dateDu: document.getElementById('dateDu').value,
+    dateAu: document.getElementById('dateAu').value,
+    chariotGuide: document.getElementById('chariotGuide').value,
+    ensembleDechargement: document.getElementById('ensembleDechargement').value,
+    ensembleRechargement: document.getElementById('ensembleRechargement').value,
+    typeDechargement: document.getElementById('typeDechargement').checked,
+    typeRechargement: document.getElementById('typeRechargement').checked,
+    visa: document.getElementById('visa').value,
+    rows
+  };
+}
+
+function fmtDate(d){
+  if(!d) return '';
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+
+function drawCheckbox(doc, x, y, checked){
+  doc.rect(x, y-3, 3.6, 3.6);
+  if(checked){
+    doc.setLineWidth(0.5);
+    doc.line(x+0.4, y-1.2, x+1.5, y-0.2);
+    doc.line(x+1.5, y-0.2, x+3.3, y-3.1);
+    doc.setLineWidth(0.2);
+  }
+}
+
+function buildPDF(){
+  const d = collectData();
+  const doc = new jsPDF({ unit:'mm', format:'a4' });
+  const pageW = 210;
+  const marginL = 15, marginR = 15;
+
+  doc.setFont('helvetica','italic');
+  doc.setFontSize(9);
+  doc.text('Annexe 1 : Compte rendu de chantier', pageW/2, 14, {align:'center'});
+  doc.setLineWidth(0.3);
+  doc.line(marginL, 17, pageW-marginR, 17);
+
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(10.5);
+  doc.text('SNCF INFRA - INFRARAIL', marginL, 24);
+  doc.setFontSize(9.5);
+  doc.text('ETABLISSEMENT INDUSTRIEL BOURGOGNE', marginL, 29);
+  doc.text('VENAREY-LAUMES / SAULON-LA CHAPELLE', marginL, 34);
+
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(8);
+  doc.text('Route de Bussy', marginL, 39);
+  doc.text('21150 VENAREY-LES-LAUMES', marginL, 43);
+  doc.text('Tel. 535 291', marginL, 47);
+  doc.text('Fax SNCF 535 246', marginL, 51);
+
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(15);
+  doc.text('COMPTE RENDU DE CHANTIER', pageW/2, 33, {align:'center'});
+
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(9);
+  drawCheckbox(doc, 150, 24, d.typeDechargement);
+  doc.text('Déchargement rails', 155, 24);
+  drawCheckbox(doc, 150, 31, d.typeRechargement);
+  doc.text('Rechargement rails', 155, 31);
+
+  let y = 62;
+  doc.setFontSize(9.5);
+  doc.setFont('helvetica','bold');
+  doc.text('Nom des agents :', marginL, y);
+  doc.setFont('helvetica','normal');
+  doc.text(d.agents || '', marginL + 33, y);
+
+  doc.setFont('helvetica','bold');
+  doc.text('N° chariot guide :', 110, y);
+  doc.setFont('helvetica','normal');
+  doc.text(d.chariotGuide || '', 110 + 33, y);
+
+  y += 6;
+  doc.setFont('helvetica','bold');
+  doc.text('Lieu du chantier :', marginL, y);
+  doc.setFont('helvetica','normal');
+  doc.text(d.lieu || '', marginL + 33, y);
+
+  doc.setFont('helvetica','bold');
+  doc.text('N° ensemble déchargement :', 110, y);
+  doc.setFont('helvetica','normal');
+  doc.text(d.ensembleDechargement || '', 110 + 47, y);
+
+  y += 6;
+  doc.setFont('helvetica','bold');
+  doc.text('Date du', marginL, y);
+  doc.setFont('helvetica','normal');
+  doc.text(fmtDate(d.dateDu), marginL + 14, y);
+  doc.setFont('helvetica','bold');
+  doc.text('au', marginL + 40, y);
+  doc.setFont('helvetica','normal');
+  doc.text(fmtDate(d.dateAu), marginL + 46, y);
+
+  doc.setFont('helvetica','bold');
+  doc.text('N° ensemble rechargement :', 110, y);
+  doc.setFont('helvetica','normal');
+  doc.text(d.ensembleRechargement || '', 110 + 47, y);
+
+  const body = d.rows.map(r => [
+    fmtDate(r.date), r.htravail || '', r.hintervalle || '',
+    r.nature || '', r.longueur || '', r.obs || ''
+  ]);
+  if(body.length === 0) body.push(['','','','','','']);
+
+  doc.autoTable({
+    startY: y + 8,
+    margin: { left: marginL, right: marginR },
+    head: [['Date','Horaires\nTravail','Horaires\nintervalle','Nature des travaux','Lg de rails\ntraités','Observations']],
+    body: body,
+    theme: 'grid',
+    styles:{ font:'helvetica', fontSize:8.5, cellPadding:2, lineColor:[20,20,20], lineWidth:0.25, valign:'top' },
+    headStyles:{ fillColor:[255,255,255], textColor:[0,0,0], fontStyle:'bold', halign:'center', lineWidth:0.3 },
+    columnStyles:{
+      0:{ cellWidth:18, halign:'center' },
+      1:{ cellWidth:20, halign:'center' },
+      2:{ cellWidth:20, halign:'center' },
+      3:{ cellWidth:52 },
+      4:{ cellWidth:22, halign:'center' },
+      5:{ cellWidth:48 },
+    },
+  });
+
+  let finalY = doc.lastAutoTable.finalY;
+  if(finalY > 270){
+    doc.addPage();
+    finalY = 20;
+  }
+  doc.setLineWidth(0.3);
+  doc.rect(marginL, finalY, pageW - marginL - marginR, 14);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(9.5);
+  doc.text('Visa Responsable rames :', marginL + 3, finalY + 9);
+  doc.setFont('helvetica','normal');
+  doc.text(d.visa || '', marginL + 55, finalY + 9);
+
+  return doc;
+}
+
+function filenameFor(d){
+  const lieu = (d.lieu || 'chantier').trim().replace(/[^a-z0-9]+/gi,'-').replace(/(^-|-$)/g,'');
+  const date = d.dateDu || new Date().toISOString().slice(0,10);
+  return `compte-rendu-chantier_${lieu || 'site'}_${date}.pdf`;
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  const data = collectData();
+  const doc = buildPDF();
+  doc.save(filenameFor(data));
+  showToast('PDF téléchargé.');
+});
+
+document.getElementById('mailBtn').addEventListener('click', () => {
+  const data = collectData();
+  const doc = buildPDF();
+  doc.save(filenameFor(data));
+
+  const subject = `Compte rendu de chantier - ${data.lieu || 'chantier'} - ${fmtDate(data.dateDu) || ''}`;
+  const bodyLines = [
+    `Bonjour,`,
+    ``,
+    `Veuillez trouver ci-joint le compte rendu de chantier.`,
+    `Lieu : ${data.lieu || ''}`,
+    `Date : ${fmtDate(data.dateDu)} au ${fmtDate(data.dateAu)}`,
+    `Agents : ${data.agents || ''}`,
+    ``,
+    `(Le fichier PDF vient d'être téléchargé sur cet appareil : merci de le joindre à cet e-mail avant l'envoi.)`,
+    ``,
+    `Cordialement,`
+  ];
+  const mailto = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyLines.join('\n'))}`;
+
+  showToast('PDF téléchargé — ouverture de la messagerie...');
+  setTimeout(() => { window.location.href = mailto; }, 600);
+});
+</script>
+
+</body>
+</html>
