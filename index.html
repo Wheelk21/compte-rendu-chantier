@@ -251,9 +251,93 @@
     box-shadow:0 6px 18px rgba(0,0,0,.25);
   }
   .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* ---------- Lock screen ---------- */
+  #lockScreen{
+    position:fixed;
+    inset:0;
+    background:var(--navy-dark);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:1000;
+    padding:20px;
+  }
+  #lockScreen.hidden{ display:none; }
+  .lock-card{
+    background:#fff;
+    border-radius:8px;
+    padding:32px 28px;
+    max-width:320px;
+    width:100%;
+    text-align:center;
+    box-shadow:0 10px 40px rgba(0,0,0,.35);
+  }
+  .lock-card .lock-icon{
+    font-size:2rem;
+    margin-bottom:6px;
+  }
+  .lock-card h2{
+    font-size:1.05rem;
+    margin:0 0 4px;
+    color:var(--navy-dark);
+  }
+  .lock-card p{
+    font-size:.82rem;
+    color:var(--text-soft);
+    margin:0 0 18px;
+  }
+  .lock-card input{
+    width:100%;
+    border:1px solid var(--line);
+    border-radius:5px;
+    padding:12px;
+    font-size:1.3rem;
+    letter-spacing:6px;
+    text-align:center;
+    margin-bottom:14px;
+  }
+  .lock-card input:focus{
+    outline:none;
+    border-color:var(--navy);
+    box-shadow:0 0 0 3px rgba(18,42,78,.08);
+  }
+  .lock-card button{
+    width:100%;
+    background:var(--orange);
+    color:#fff;
+    border:none;
+    border-radius:5px;
+    padding:12px;
+    font-size:.92rem;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .lock-card button:hover{ background:var(--orange-dark); }
+  .lock-error{
+    color:#B3261E;
+    font-size:.8rem;
+    margin-top:10px;
+    min-height:1em;
+  }
+  #appContent{ display:none; }
+  #appContent.visible{ display:block; }
 </style>
 </head>
 <body>
+
+<div id="lockScreen">
+  <div class="lock-card">
+    <div class="lock-icon">🔒</div>
+    <h2>Accès protégé</h2>
+    <p>Entrez le code PIN pour accéder au compte rendu de chantier.</p>
+    <input type="password" id="pinInput" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••">
+    <button type="button" id="pinSubmit">Déverrouiller</button>
+    <div class="lock-error" id="pinError"></div>
+  </div>
+</div>
+
+<div id="appContent">
 
 <div class="topbar">
   <div>
@@ -347,7 +431,43 @@
 
 <div class="toast" id="toast"></div>
 
+</div>
+
 <script>
+const CORRECT_PIN = '2609';
+const lockScreen = document.getElementById('lockScreen');
+const appContent = document.getElementById('appContent');
+const pinInput = document.getElementById('pinInput');
+const pinSubmit = document.getElementById('pinSubmit');
+const pinError = document.getElementById('pinError');
+
+function unlockApp(){
+  lockScreen.classList.add('hidden');
+  appContent.classList.add('visible');
+}
+
+function checkPin(){
+  if(pinInput.value === CORRECT_PIN){
+    sessionStorage.setItem('crc_unlocked', '1');
+    unlockApp();
+  } else {
+    pinError.textContent = 'Code incorrect, réessayez.';
+    pinInput.value = '';
+    pinInput.focus();
+  }
+}
+
+if(sessionStorage.getItem('crc_unlocked') === '1'){
+  unlockApp();
+} else {
+  pinInput.focus();
+}
+
+pinSubmit.addEventListener('click', checkPin);
+pinInput.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter') checkPin();
+});
+
 const { jsPDF } = window.jspdf;
 
 let entryIdCounter = 0;
