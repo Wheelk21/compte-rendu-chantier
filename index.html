@@ -330,15 +330,17 @@
   </div>
 
   <div class="actions">
-    <button class="btn btn-secondary" id="downloadBtn" type="button">⬇ Télécharger le PDF</button>
-    <button class="btn btn-primary" id="mailBtn" type="button">✉ Envoyer par mail</button>
+    <button class="btn btn-primary" id="downloadBtn" type="button" style="flex:1 1 100%;">⬇ Télécharger le PDF</button>
   </div>
 
   <div class="note">
-    <strong>À propos de l'envoi par mail :</strong> pour des raisons de sécurité, un navigateur ne peut pas joindre
-    automatiquement un fichier à un e-mail. En cliquant sur « Envoyer par mail », le PDF est d'abord téléchargé
-    dans votre dossier Téléchargements, puis votre messagerie s'ouvre avec le sujet et le message déjà préparés :
-    il ne vous restera qu'à joindre ce fichier avant l'envoi.
+    <strong>Pour l'envoyer par mail :</strong>
+    <ol style="margin:8px 0 2px 18px; padding:0;">
+      <li>Cliquez sur « Télécharger le PDF » ci-dessus — le fichier est enregistré dans votre dossier Téléchargements.</li>
+      <li>Ouvrez votre messagerie et créez un nouveau message.</li>
+      <li>Joignez le fichier PDF téléchargé (bouton trombone / « Joindre un fichier »).</li>
+      <li>Envoyez le message.</li>
+    </ol>
   </div>
 
 </main>
@@ -476,10 +478,6 @@ function buildPDF(){
   doc.text('Tel. 535 291', marginL, 47);
   doc.text('Fax SNCF 535 246', marginL, 51);
 
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(15);
-  doc.text('COMPTE RENDU DE CHANTIER', pageW/2, 33, {align:'center'});
-
   doc.setFont('helvetica','normal');
   doc.setFontSize(9);
   drawCheckbox(doc, 150, 24, d.typeDechargement);
@@ -487,7 +485,14 @@ function buildPDF(){
   drawCheckbox(doc, 150, 31, d.typeRechargement);
   doc.text('Rechargement rails', 155, 31);
 
-  let y = 62;
+  doc.setLineWidth(0.2);
+  doc.line(marginL, 57, pageW-marginR, 57);
+
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(15);
+  doc.text('COMPTE RENDU DE CHANTIER', pageW/2, 66, {align:'center'});
+
+  let y = 80;
   doc.setFontSize(9.5);
   doc.setFont('helvetica','bold');
   doc.text('Nom des agents :', marginL, y);
@@ -585,29 +590,6 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
   showToast('PDF téléchargé.');
 });
 
-document.getElementById('mailBtn').addEventListener('click', () => {
-  const data = collectData();
-  const doc = buildPDF();
-  doc.save(filenameFor(data));
-
-  const subject = `Compte rendu de chantier - ${data.lieu || 'chantier'} - ${fmtDate(data.dateDu) || ''}`;
-  const bodyLines = [
-    `Bonjour,`,
-    ``,
-    `Veuillez trouver ci-joint le compte rendu de chantier.`,
-    `Lieu : ${data.lieu || ''}`,
-    `Date : ${fmtDate(data.dateDu)} au ${fmtDate(data.dateAu)}`,
-    `Agents : ${data.agents || ''}`,
-    ``,
-    `(Le fichier PDF vient d'être téléchargé sur cet appareil : merci de le joindre à cet e-mail avant l'envoi.)`,
-    ``,
-    `Cordialement,`
-  ];
-  const mailto = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyLines.join('\n'))}`;
-
-  showToast('PDF téléchargé — ouverture de la messagerie...');
-  setTimeout(() => { window.location.href = mailto; }, 600);
-});
 </script>
 
 </body>
