@@ -1,8 +1,15 @@
 <!DOCTYPE html>
+<!--
+  © 2026 Kevin Roussel — Tous droits réservés.
+  Ce code source est une œuvre originale protégée par le droit d'auteur.
+  Toute reproduction, distribution, modification ou réutilisation, totale
+  ou partielle, est interdite sans l'autorisation écrite préalable de l'auteur.
+-->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow, noarchive">
 <title>Outils de chantier — SNCF RESEAU</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -255,6 +262,15 @@
     margin-bottom:26px;
   }
   .note strong{ color:var(--navy-dark); }
+
+  .app-footer{
+    text-align:center;
+    font-size:.68rem;
+    color:var(--text-soft);
+    opacity:.75;
+    padding:18px 10px 6px;
+    user-select:none;
+  }
 
   .toast{
     position:fixed;
@@ -624,9 +640,24 @@
 
 <div class="toast" id="toast"></div>
 
+<footer class="app-footer">© 2026 Kevin Roussel — Tous droits réservés. Reproduction ou diffusion du code interdite sans autorisation écrite.</footer>
+
 </div>
 
 <script>
+/* © 2026 Kevin Roussel — Tous droits réservés. Code protégé, reproduction interdite. */
+console.log('%c© 2026 Kevin Roussel — Tous droits réservés.\nCe code est protégé par le droit d\'auteur. Toute copie ou réutilisation est interdite sans autorisation écrite.', 'color:#b00; font-weight:bold; font-size:13px;');
+
+// Dissuasion basique contre la copie occasionnelle (ne bloque pas un développeur déterminé)
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('keydown', e => {
+  const k = e.key;
+  const blocked = (e.ctrlKey && (k === 'u' || k === 'U' || k === 's' || k === 'S')) ||
+                   (e.ctrlKey && e.shiftKey && (k === 'I' || k === 'i' || k === 'J' || k === 'j' || k === 'C' || k === 'c')) ||
+                   k === 'F12';
+  if (blocked) e.preventDefault();
+});
+
 const CORRECT_PIN = '2609';
 const lockScreen = document.getElementById('lockScreen');
 const appContent = document.getElementById('appContent');
